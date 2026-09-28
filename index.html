@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>混沌纪元</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; overflow:hidden; background:#000; color:#fff;
+  font-family:"PingFang SC","Microsoft YaHei",sans-serif; }
+
+/* ===== 背景（静止）+ 故障特效 ===== */
+.bg { position:fixed; inset:0; background:url('bg.png') center/cover no-repeat; z-index:0; }
+.glitch-line { position:fixed; left:0; right:0; height:2px; z-index:3; pointer-events:none;
+  background:rgba(255,80,80,.5); mix-blend-mode:screen; animation:scan 7s linear infinite; opacity:0; }
+@keyframes scan { 0%,88%{opacity:0; top:0;} 90%{opacity:1;} 94%{opacity:.2;} 100%{opacity:0; top:100%;} }
+.glitch-flash { position:fixed; inset:0; z-index:3; pointer-events:none; opacity:0;
+  background:rgba(255,0,40,.06); animation:flash 8s steps(1) infinite; }
+@keyframes flash { 0%,100%{opacity:0;} 91%{opacity:1; transform:translateX(3px);} 92.5%{opacity:0; transform:translateX(-2px);} 93.5%{opacity:.8;} 94%{opacity:0;} }
+.glitch-txt { position:relative; display:inline-block; }
+.glitch-txt::before,.glitch-txt::after { content:attr(data-t); position:absolute; left:0; top:0; width:100%; overflow:hidden; }
+.glitch-txt::before { color:#0ff; clip-path:inset(0 0 55% 0); animation:g1 3.4s infinite steps(2); opacity:.5; }
+.glitch-txt::after  { color:#f00; clip-path:inset(55% 0 0 0); animation:g2 2.9s infinite steps(2); opacity:.5; }
+@keyframes g1 { 0%,92%,100%{transform:translate(0);} 94%{transform:translate(-2px,-1px);} 97%{transform:translate(2px,1px);} }
+@keyframes g2 { 0%,90%,100%{transform:translate(0);} 93%{transform:translate(2px,1px);} 96%{transform:translate(-2px,-1px);} }
+
+/* ===== 页面通用 ===== */
+.page { position:fixed; inset:0; z-index:2; display:flex; flex-direction:column; overflow-y:auto; }
+.footer-mark { margin-top:auto; text-align:center; color:rgba(255,255,255,.25);
+  letter-spacing:.35em; font-size:3.6vw; padding:3vh 0 2.5vh; font-weight:bold; }
+
+/* ===== 顶部栏 ===== */
+.topbar { height:13vw; max-height:64px; flex-shrink:0;
+  background:linear-gradient(90deg,#000 0%,#7a0c14 30%,#d41423 60%,#7a0c14 85%,#000 100%);
+  display:flex; align-items:center; justify-content:space-between; padding:0 4vw;
+  box-shadow:0 2px 10px rgba(0,0,0,.7); }
+.topbar img { height:7.5vw; max-height:38px; }
+.icon-btn { width:10.5vw; height:10.5vw; max-width:46px; max-height:46px; border:none; border-radius:10px;
+  background:transparent; color:#fff; font-size:6.5vw; display:flex; align-items:center;
+  justify-content:center; cursor:pointer; user-select:none; }
+
+/* ===== 启动页 ===== */
+#startPage .mid { display:flex; flex-direction:column; align-items:center; }
+.title { margin-top:52vh; font-weight:900; letter-spacing:.3em; text-indent:.3em;
+  font-size:6.4vw; text-shadow:0 0 14px rgba(255,50,50,.9),0 2px 6px #000; }
+.input-wrap { margin-top:6vh; width:76vw; max-width:380px; background:rgba(255,255,255,.95);
+  border:3px solid #e8e8e8; border-radius:999px; padding:4vw 6vw; box-shadow:0 6px 22px rgba(0,0,0,.6); }
+.input-wrap input { width:100%; border:none; outline:none; background:transparent;
+  font-size:4.6vw; text-align:center; letter-spacing:.25em; color:#222; }
+.big-btn { margin-top:5vh; width:76vw; max-width:380px; padding:4.4vw 0;
+  border:2px solid rgba(255,120,130,.7); border-radius:999px; cursor:pointer;
+  font-size:4.8vw; font-weight:bold; letter-spacing:.4em; text-indent:.4em; color:#fff;
+  background:linear-gradient(180deg,#ef2b3a,#b8121f);
+  box-shadow:0 5px 18px rgba(220,20,45,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+.big-btn:active { transform:scale(.97); }
+.hint { width:76vw; max-width:380px; margin-top:2.5vh; color:#ff5060; font-size:3.8vw; }
+.notice { width:86vw; max-width:460px; margin:8vh auto 0; background:rgba(0,0,0,.55);
+  border:1px solid rgba(255,255,255,.18); border-radius:10px; padding:3.5vh 5vw;
+  font-size:3.9vw; line-height:2; text-align:center; white-space:pre-line; }
+
+/* ===== 大厅 ===== */
+.sysbar { margin:3vw 4vw 0; background:rgba(0,0,0,.7); border-radius:8px;
+  padding:2.5vw 4vw; color:#ff4d5a; font-size:3.7vw; min-height:8vw; }
+.card { background:#191721; border:1px solid #2e2938; border-radius:14px;
+  margin:3.5vw 4vw 0; padding:5vw; }
+.card-title { color:#ff4d5a; font-size:5vw; font-weight:bold;
+  border-left:5px solid #ff4d5a; padding-left:2.5vw; margin-bottom:4vw; }
+.info-flex { display:flex; gap:6vw; align-items:flex-start; }
+.avatar { width:26vw; height:26vw; max-width:110px; max-height:110px; border-radius:50%;
+  background:#fff; object-fit:cover; flex-shrink:0; }
+.info-list { font-size:4.3vw; font-weight:bold; line-height:1.95; }
+.info-list b { color:#fff; }
+.grid-btns { display:grid; grid-template-columns:1fr 1fr; gap:3.5vw; margin-top:5vw; }
+.gbtn { background:#fff; color:#111; border:none; border-radius:10px;
+  padding:4.5vw 0; font-size:4.2vw; font-weight:bold; cursor:pointer; }
+.gbtn:active { transform:scale(.97); background:#eee; }
+
+/* ===== 设置面板（全屏仿参考图）===== */
+#settings { display:none; position:fixed; inset:0; z-index:20; background:rgba(0,0,0,.92); overflow-y:auto; }
+#settings .topbar { position:sticky; top:0; }
+.set-card { background:#1c1922; border:1px solid #322c3c; border-radius:16px;
+  margin:4vw 4vw 0; padding:6vw; }
+.set-title { font-size:5.4vw; font-weight:bold; border-left:5px solid; padding-left:2.5vw; margin-bottom:5vw; }
+.t-red { color:#ff4d5a; border-color:#ff4d5a; }
+.t-green { color:#2ee84e; border-color:#2ee84e; margin-top:8vw; }
+.dash { border-top:1px dashed #3a3444; margin:4vw 0; }
+.row { display:flex; align-items:center; justify-content:space-between;
+  font-size:4.2vw; font-weight:bold; margin:5vw 0; gap:3vw; }
+.sw { width:13vw; height:7vw; max-width:56px; max-height:28px; border-radius:999px; background:#555;
+  position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
+.sw.on { background:#e33; }
+.sw::after { content:""; position:absolute; top:1vw; left:1vw; width:5vw; height:5vw; max-width:22px; max-height:22px;
+  border-radius:50%; background:#e33; transition:.2s; }
+.sw.on::after { left:calc(100% - 6vw); background:#fff; }
+input[type=range] { width:100%; accent-color:#e33; margin:2vw 0 6vw; }
+.chg { display:grid; grid-template-columns:24vw 1fr 18vw; align-items:center; gap:3vw; margin:6vw 0; }
+.chg label { font-size:4.2vw; font-weight:bold; }
+.mini-input { background:#f2f2f2; border-radius:999px; padding:2.8vw 4vw; border:none; outline:none;
+  font-size:3.8vw; color:#333; width:100%; text-align:center; }
+.mini-btn { background:#e62836; color:#fff; border:none; border-radius:999px;
+  padding:2.8vw 0; font-size:3.9vw; font-weight:bold; cursor:pointer; }
+.mini-btn:active { transform:scale(.95); }
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="glitch-line"></div>
+<div class="glitch-flash"></div>
+
+<!-- ================= 启动页 ================= -->
+<div class="page" id="startPage">
+  <div class="mid" style="flex:1;">
+    <div class="title glitch-txt" data-t="· 验证身份 ·">· 验证身份 ·</div>
+    <div class="input-wrap"><input id="pid" type="text" inputmode="numeric" maxlength="10" placeholder="" autocomplete="off"></div>
+    <button class="big-btn" onclick="verify()">进 入</button>
+    <div class="hint" id="hint">提示：</div>
+  </div>
+  <div class="notice" id="notice"></div>
+  <div class="footer-mark">HUNDUNJIYUAN</div>
+</div>
+
+<!-- ================= 大厅页 ================= -->
+<div class="page" id="hallPage" style="display:none;">
+  <div class="topbar">
+    <button class="icon-btn" onclick="logout()">←</button>
+    <img src="logo.png" alt="混沌纪元">
+    <button class="icon-btn" onclick="openSettings()">⚙</button>
+  </div>
+  <div class="sysbar" id="sysbar">系统提示：</div>
+  <div class="card">
+    <div class="card-title">个人信息</div>
+    <div class="info-flex">
+      <img class="avatar" id="avatarImg" src="avatar.png" onerror="this.style.visibility='hidden'">
+      <div class="info-list">
+        姓名：<b id="iName">--</b><br>
+        ID：<b id="iId">--</b><br>
+        门派：<b id="iSect">散人</b><br>
+        等级：<b id="iLv">1</b><br>
+        玄币：<b id="iGold">0</b><br>
+        属性：<b id="iAttr">--</b>
+      </div>
+    </div>
+    <div class="grid-btns">
+      <button class="gbtn" onclick="todo('商店')">商店</button>
+      <button class="gbtn" onclick="todo('背包')">背包</button>
+      <button class="gbtn" onclick="todo('地图')">地图</button>
+      <button class="gbtn" onclick="todo('任务')">任务</button>
+      <button class="gbtn" onclick="roll()">摇骰子</button>
+      <button class="gbtn" onclick="todo('队伍')">队伍</button>
+    </div>
+  </div>
+  <div class="footer-mark">HUNDUNJIYUAN</div>
+</div>
+
+<!-- ================= 设置中心 ================= -->
+<div id="settings">
+  <div class="topbar">
+    <button class="icon-btn" onclick="closeSettings()">←</button>
+    <img src="logo.png" alt="混沌纪元">
+    <span style="width:10.5vw;"></span>
+  </div>
+  <div class="set-card">
+    <div class="set-title t-red">设置中心</div>
+    <div class="dash"></div>
+    <div class="row"><span>背景音乐</span><div class="sw on" id="musicSw" onclick="toggleMusic()"></div></div>
+    <input type="range" id="vol" min="0" max="100" value="60" oninput="setVol(this.value)">
+
+    <div class="set-title t-green">更换信息</div>
+    <div class="dash"></div>
+    <div class="chg"><label>更换ID</label><input class="mini-input" id="newId" placeholder="请输入"><button class="mini-btn" onclick="changeId()">确认</button></div>
+    <div class="chg"><label>更换头像</label><input class="mini-input" id="avatarName" placeholder="选择图片" readonly onclick="document.getElementById('avatarFile').click()"><button class="mini-btn" onclick="changeAvatar()">确认</button></div>
+    <input type="file" id="avatarFile" accept="image/*" style="display:none" onchange="document.getElementById('avatarName').value=this.files[0]?this.files[0].name:''">
+    <div class="chg"><label>更换姓名</label><input class="mini-input" id="newName" placeholder="请输入"><button class="mini-btn" onclick="changeName()">确认</button></div>
+    <div class="chg"><label>兑换卡密</label><input class="mini-input" id="cardKey" placeholder="请输入"><button class="mini-btn" onclick="redeem()">确认</button></div>
+  </div>
+  <div class="footer-mark">HUNDUNJIYUAN</div>
+</div>
+
+<script>
+/* ========== 站长配置区 ========== */
+const CONFIG = {
+  validIds: ["00001"],   // 以后接 LeanCloud 后，这里换成云端查询
+  players: { "00001": { name:"测试冒险者", gold:100, sect:"散人", lv:1, attr:"力5 敏4 智6" } },
+  notice: "欢迎进入《混沌纪元》沙盒世界！\n\n请输入您的专属ID进入系统。\n本游戏纯属原创虚构切勿较真,祝冒险愉快！",
+  cardKeys: { "TEST-8888": 50 }   // 卡密:玄币，接后台后改为云端卡密表
+};
+/* ============================ */
+
+const $ = id => document.getElementById(id);
+$("notice").innerText = CONFIG.notice;
+
+/* ---- 背景音乐（首次触摸自动播放）---- */
+const bgm = new Audio("bgm.mp3"); bgm.loop = true; bgm.volume = .6;
+let musicOn = true, playing = false;
+function tryMusic(){ if(musicOn && !playing){ bgm.play().then(()=>playing=true).catch(()=>{}); } }
+document.addEventListener("touchstart", tryMusic);
+document.addEventListener("click", tryMusic);
+function setVol(v){ bgm.volume = v/100; }
+function toggleMusic(){
+  musicOn = !musicOn;
+  musicOn ? bgm.play().then(()=>playing=true).catch(()=>{}) : bgm.pause();
+  $("musicSw").classList.toggle("on", musicOn);
+}
+
+/* ---- 登录 / 登出 ---- */
+let curId = null;
+function verify(){
+  const id = $("pid").value.trim();
+  if(!id){ $("hint").innerText = "提示：请输入玩家ID"; return; }
+  if(!CONFIG.validIds.includes(id)){ $("hint").innerText = "提示：ID不存在或未激活，请联系主持人"; return; }
+  curId = id;
+  const p = CONFIG.players[id];
+  $("iName").innerText = localStorage.getItem("hs_name_"+id) || p.name;
+  $("iId").innerText   = localStorage.getItem("hs_id_"+id)   || id;
+  $("iGold").innerText = localStorage.getItem("hs_gold_"+id) ?? p.gold;
+  $("iSect").innerText = p.sect; $("iLv").innerText = p.lv; $("iAttr").innerText = p.attr;
+  const av = localStorage.getItem("hs_avatar_"+id);
+  if(av){ $("avatarImg").src = av; $("avatarImg").style.visibility = "visible"; }
+  $("sysbar").innerText = "系统提示：欢迎回来，" + $("iName").innerText + "！";
+  $("startPage").style.display = "none";
+  $("hallPage").style.display = "flex";
+}
+function logout(){ $("hallPage").style.display="none"; $("startPage").style.display="flex"; }
+document.addEventListener("keydown", e=>{ if(e.key==="Enter" && $("startPage").style.display!=="none") verify(); });
+
+/* ---- 更换信息（现阶段存本机，接后台后换云端）---- */
+function changeId(){
+  const v = $("newId").value.trim();
+  if(!v) return alert("请输入新ID");
+  localStorage.setItem("hs_id_"+curId, v); $("iId").innerText = v;
+  $("newId").value=""; $("sysbar").innerText = "系统提示：ID已更换为 " + v + "（接后台后全网生效）";
+}
+function changeName(){
+  const v = $("newName").value.trim();
+  if(!v) return alert("请输入新姓名");
+  localStorage.setItem("hs_name_"+curId, v); $("iName").innerText = v;
+  $("newName").value=""; $("sysbar").innerText = "系统提示：姓名已更换";
+}
+function changeAvatar(){
+  const f = $("avatarFile").files[0];
+  if(!f) return alert("请先选择图片");
+  const r = new FileReader();
+  r.onload = e => { const d = e.target.result;
+    try{ localStorage.setItem("hs_avatar_"+curId, d); }catch(err){ return alert("图片过大，请换小图"); }
+    $("avatarImg").src = d; $("avatarImg").style.visibility="visible";
+    $("avatarName").value=""; $("sysbar").innerText = "系统提示：头像已更换"; };
+  r.readAsDataURL(f);
+}
+function redeem(){
+  const k = $("cardKey").value.trim();
+  const val = CONFIG.cardKeys[k];
+  if(!val) return $("sysbar").innerText = "系统提示：卡密无效";
+  if(localStorage.getItem("hs_used_"+k)) return $("sysbar").innerText = "系统提示：该卡密已被使用";
+  localStorage.setItem("hs_used_"+k, "1");
+  const g = +$("iGold").innerText + val;
+  localStorage.setItem("hs_gold_"+curId, g); $("iGold").innerText = g;
+  $("cardKey").value=""; $("sysbar").innerText = "系统提示：兑换成功，获得 " + val + " 玄币！";
+}
+
+/* ---- 大厅功能 ---- */
+function todo(n){ $("sysbar").innerText = "系统提示：「" + n + "」功能建设中，敬请期待"; }
+function roll(){ $("sysbar").innerText = "系统提示：🎲 掷出了 " + (Math.floor(Math.random()*20)+1) + " 点（D20）"; }
+
+/* ---- 设置页 ---- */
+function openSettings(){ $("settings").style.display = "block"; }
+function closeSettings(){ $("settings").style.display = "none"; }
+</script>
+</body>
+</html>
