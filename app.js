@@ -25,7 +25,7 @@ updateExpiry()
 $('days').addEventListener('input', updateExpiry)
 $('starts').addEventListener('change', updateExpiry)
 $('permanent').addEventListener('change', () => { $('days').disabled = $('expires').disabled = $('permanent').checked })
-$('issue-scope').addEventListener('change', () => { $('machine-label').hidden = $('issue-scope').value !== 'fixed'; $('issue-binds-label').hidden = $('issue-scope').value === 'multi'; $('issue-max-binds').disabled = $('issue-scope').value === 'multi' })
+$('issue-scope').addEventListener('change', () => { $('machine-label').hidden = $('issue-scope').value !== 'fixed'; $('issue-devices-label').hidden = $('issue-scope').value !== 'multi' })
 $('settings-open').addEventListener('click', () => $('settings').showModal())
 $('settings-save').addEventListener('click', () => status('连接设置已更新，点击刷新记录。'))
 
@@ -81,6 +81,7 @@ $('refresh').addEventListener('click', refresh)
 
 function cardState(row) { return row.status === 'revoked' ? 'revoked' : Number(row.expiresUtc) <= Date.now() ? 'expired' : 'active' }
 function stateText(row) { return { active: '正常', expired: '已到期', revoked: '已停用' }[cardState(row)] }
+function isMulti(row) { return !!row.multi || String(row.signedPayload || '').startsWith('DSH-CDR|2|') }
 function cell(row, text) { const td = document.createElement('td'); td.textContent = text; row.append(td); return td }
 function render() {
   const filter = $('filter').value.trim().toLowerCase(), mode = $('state-filter').value
@@ -92,7 +93,7 @@ function render() {
     const tr = document.createElement('tr'); tr.classList.toggle('selected', row._id === state.selected?._id)
     const first = document.createElement('td'), name = document.createElement('strong'), id = document.createElement('small'); first.dataset.label = '名称 / 卡密 ID'
     name.textContent = row.note || '未填写备注'; id.textContent = row._id; first.append(name, id); tr.append(first)
-    cell(tr, row.boundMachine ? row.boundMachine.slice(0, 12) + '…' : '未绑定').dataset.label = '绑定状态'
+    cell(tr, isMulti(row) ? (row.maxDevices == null ? '多设备不限' : `${(row.boundMachines || []).length} / ${row.maxDevices} 台`) : row.boundMachine ? row.boundMachine.slice(0, 12) + '…' : '未绑定').dataset.label = '绑定状态'
     cell(tr, `${row.bindCount ?? 0} / ${row.maxBinds ?? 1}`).dataset.label = '已用 / 允许解绑'; cell(tr, dateText(row.expiresUtc)).dataset.label = '到期时间'
     const last = document.createElement('td'), badge = document.createElement('span'); last.dataset.label = '状态'; badge.className = `badge ${cardState(row)}`; badge.textContent = stateText(row); last.append(badge); tr.append(last)
     tr.addEventListener('click', () => { state.selected = row; $('logs').hidden = true; render() }); body.append(tr)
@@ -101,7 +102,13 @@ function render() {
   $('details-content').hidden = !row
   $('selected-label').textContent = row ? row.note || '未填写备注' : '选择一条记录进行管理'
   $('selected-state').textContent = row ? stateText(row) : ''
-  if (row) { $('detail-id').textContent = row._id; $('detail-machine').textContent = row.boundMachine || '未绑定'; $('detail-signed-expiry').textContent = dateText(row.sigExpiresUtc); $('detail-max-binds').value = row.maxBinds ?? 1; $('detail-binds-used').textContent = `已使用 ${row.bindCount ?? 0} 次` }
+  if (row) {
+    const multi = isMulti(row), devices = Array.isArray(row.boundMachines) ? row.boundMachines : []
+    $('detail-id').textContent = row._id; $('detail-machine').textContent = multi ? (row.maxDevices == null ? '旧版不限设备' : `已绑定 ${devices.length} 台`) : row.boundMachine || '未绑定'; $('detail-signed-expiry').textContent = dateText(row.sigExpiresUtc); $('detail-max-binds').value = row.maxBinds ?? 1; $('detail-binds-used').textContent = `已使用 ${row.bindCount ?? 0} 次`
+    $('device-settings').hidden = !multi; $('detail-max-devices').value = row.maxDevices ?? 2; $('device-count').textContent = row.maxDevices == null ? '当前不限台数' : `已绑定 ${devices.length} 台`; $('device-list').replaceChildren()
+    for (const machine of devices) { const line = document.createElement('div'), code = document.createElement('span'), button = document.createElement('button'); line.className = 'device-row'; code.textContent = machine; button.className = 'secondary'; button.textContent = '移除设备'; button.dataset.action = 'remove-device'; button.dataset.machine = machine; line.append(code, button); $('device-list').append(line) }
+    document.querySelector('[data-action=rebind]').hidden = multi
+  }
 }
 $('filter').addEventListener('input', render)
 $('state-filter').addEventListener('change', render)
@@ -115,9 +122,10 @@ $('issue-form').addEventListener('submit', async event => {
     const machine = $('issue-scope').value === 'multi' ? 'MULTI' : $('issue-scope').value === 'fixed' ? $('issue-machine').value.trim() : ''
     if ($('issue-scope').value === 'fixed' && !machine) throw Error('请输入客户机器码')
     $('issue-form').querySelector('[type=submit]').disabled = true; status('正在签发…')
-    const maxBinds = $('issue-scope').value === 'multi' ? 1 : Number($('issue-max-binds').value)
+    const maxBinds = Number($('issue-max-binds').value), maxDevices = Number($('issue-max-devices').value)
     if (!Number.isInteger(maxBinds) || maxBinds < 0 || maxBinds > 99) throw Error('允许解绑次数请输入 0 至 99 的整数')
-    const result = await api('admin.issue', { signingToken: signing, machine, maxBinds, startsUtc: starts, expiresUtc: expires, permanent, note: $('issue-note').value.trim() })
+    if (machine === 'MULTI' && (!Number.isInteger(maxDevices) || maxDevices < 1 || maxDevices > 99)) throw Error('最多绑定电脑数请输入 1 至 99 的整数')
+    const result = await api('admin.issue', { signingToken: signing, machine, maxBinds, maxDevices, startsUtc: starts, expiresUtc: expires, permanent, note: $('issue-note').value.trim() })
     $('issued-key').value = result.key; $('copy-new').disabled = false
     await refresh(); status('签发成功，卡密已显示，可复制发送给客户。')
   } catch (error) { handleError(error) } finally { $('issue-form').querySelector('[type=submit]').disabled = false }
@@ -151,6 +159,8 @@ document.querySelector('#details-content').addEventListener('click', async event
     if (action === 'note') { const value = prompt('修改备注', row.note || ''); if (value === null) return; op = 'setNote'; extra.note = value }
     if (action === 'rebind') { if (!confirm('确定解绑？指定机器码签发的卡仍只能用于原电脑。')) return; op = 'rebind' }
     if (action === 'binds') { const value = $('detail-max-binds').value; if (!/^\d+$/.test(value) || +value > 99) throw Error('请输入 0 至 99 的整数'); op = 'setMaxBinds'; extra.maxBinds = +value }
+    if (action === 'devices') { const value = $('detail-max-devices').value; if (!/^\d+$/.test(value) || +value < 1 || +value > 99) throw Error('请输入 1 至 99 的整数'); if (row.maxDevices == null && !confirm('旧卡此前没有记录设备名单。设置上限后，原有用户需要重新兑换，按先后占用设备名额。继续？')) return; op = 'setMaxDevices'; extra.maxDevices = +value }
+    if (action === 'remove-device') { if (!confirm('移除这台电脑？联网后该设备将无法继续使用，名额可供其他电脑兑换。')) return; op = 'removeDevice'; extra.machine = event.target.dataset.machine }
     if (action === 'reset') { if (!confirm('确定将已使用的换绑次数归零？')) return; op = 'resetBinds' }
     if (action === 'delete') { if (!confirm('确定删除这张卡密？删除后卡密会被停用，记录将从列表隐藏。')) return; op = 'delete' }
     if (action === 'toggle') { op = row.status === 'revoked' ? 'restore' : 'revoke'; if (!confirm(op === 'revoke' ? '确定停用这张卡？' : '确定恢复这张卡？')) return }
