@@ -39,6 +39,18 @@
         <div class="detail" id="detail"><div class="detail-head"><div><h3>卡密详情</h3><p id="selected-label">选择一条记录进行管理</p></div><span id="selected-state"></span></div><div id="details-content" hidden><dl><div><dt>卡密 ID</dt><dd id="detail-id"></dd></div><div><dt>绑定机器码</dt><dd id="detail-machine"></dd></div><div><dt>签名到期</dt><dd id="detail-signed-expiry"></dd></div></dl><div id="device-settings" class="bind-settings" hidden><label>最多绑定电脑数<input id="detail-max-devices" type="number" min="1" max="99" step="1"></label><button data-action="devices" class="secondary">保存台数</button><span id="device-count"></span></div><div id="device-list"></div><div class="bind-settings"><label>允许解绑次数<input id="detail-max-binds" type="number" min="0" max="99" step="1"></label><button data-action="binds" class="secondary">保存次数</button><span id="detail-binds-used"></span><button data-action="reset" class="secondary">重置已用次数</button></div><div class="detail-actions"><button data-action="copy" class="secondary">复制卡密</button><button data-action="note" class="secondary">修改备注</button><button data-action="rebind" class="secondary">解绑</button><button data-action="expiry" class="secondary">修改期限</button><button data-action="toggle" class="secondary">停用 / 恢复</button><button data-action="logs" class="secondary">查看记录</button><button data-action="delete" class="secondary danger">删除卡密</button></div><div id="logs" hidden></div></div></div>
       </section>
     </section>
+    <section class="notice-editor" aria-labelledby="notice-title">
+      <div class="section-title"><div><h2 id="notice-title">插件公告</h2><p>公告同步到插件公告窗口，可设置颜色、字号、粗体和换行</p></div><span class="section-number">03</span></div>
+      <label>公告文字<textarea id="notice-text" rows="5" maxlength="4000" placeholder="输入要显示在插件公告窗口中的内容"></textarea></label>
+      <div class="notice-options">
+        <label>文字颜色<input id="notice-color" type="color" value="#FF5555"></label>
+        <label>字号<input id="notice-size" type="number" min="10" max="28" step="1" value="12"></label>
+        <label class="check-label"><input id="notice-bold" type="checkbox"><span>加粗</span></label>
+        <button id="notice-load" class="secondary">读取公告</button>
+        <button id="notice-save" class="primary">保存公告</button>
+      </div>
+      <div class="notice-preview-wrap"><span>预览</span><div id="notice-preview" class="notice-preview">公告预览</div></div>
+    </section>
     <div id="status" class="status" role="status">准备就绪</div>
   </main>
   <dialog id="settings"><form method="dialog" class="dialog-form"><div class="dialog-heading"><h2>连接设置</h2><button class="icon-button" aria-label="关闭" value="cancel">×</button></div><label>云函数地址<input id="endpoint" type="url" autocomplete="off"></label><label>管理令牌<input id="admin-token" type="password" autocomplete="off"></label><label>发卡口令<input id="signing-token" type="password" autocomplete="off"></label><p>令牌仅保存在当前页面内，关闭页面后需要重新输入。</p><div class="dialog-buttons"><button class="secondary" value="cancel">取消</button><button id="settings-save" class="primary" value="default">确认</button></div></form></dialog>

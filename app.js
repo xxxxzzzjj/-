@@ -29,6 +29,38 @@ $('issue-scope').addEventListener('change', () => { $('machine-label').hidden = 
 $('settings-open').addEventListener('click', () => $('settings').showModal())
 $('settings-save').addEventListener('click', () => status('连接设置已更新，点击刷新记录。'))
 
+function updateNoticePreview() {
+  const preview = $('notice-preview')
+  preview.textContent = $('notice-text').value || '公告预览'
+  preview.style.color = $('notice-color').value
+  preview.style.fontSize = `${Math.min(28, Math.max(10, Number($('notice-size').value) || 12))}px`
+  preview.style.fontWeight = $('notice-bold').checked ? '700' : '400'
+}
+for (const id of ['notice-text', 'notice-color', 'notice-size', 'notice-bold']) $(id).addEventListener('input', updateNoticePreview)
+async function loadNotice() {
+  status('正在读取公告…')
+  const result = await api('admin.notice.get')
+  const notice = result.notice || {}
+  $('notice-text').value = notice.text || ''
+  $('notice-color').value = /^#[\da-f]{6}$/i.test(notice.color || '') ? notice.color : '#FF5555'
+  $('notice-size').value = Number(notice.fontSize) >= 10 && Number(notice.fontSize) <= 28 ? Number(notice.fontSize) : 12
+  $('notice-bold').checked = notice.bold === true
+  updateNoticePreview()
+  status('已读取云端公告。')
+}
+$('notice-load').addEventListener('click', async () => { try { await loadNotice() } catch (error) { handleError(error) } })
+$('notice-save').addEventListener('click', async () => {
+  try {
+    const fontSize = Number($('notice-size').value)
+    if (!Number.isInteger(fontSize) || fontSize < 10 || fontSize > 28) throw Error('字号请输入 10 至 28 的整数')
+    if ($('notice-text').value.length > 4000) throw Error('公告最多 4000 个字符')
+    status('正在保存公告…')
+    await api('admin.notice.set', { text: $('notice-text').value, color: $('notice-color').value, fontSize, bold: $('notice-bold').checked })
+    status('公告已保存，插件下次打开公告窗时同步。')
+  } catch (error) { handleError(error) }
+})
+updateNoticePreview()
+
 async function api(action, data = {}) {
   const target = new URL($('endpoint').value.trim())
   if (target.protocol !== 'https:' && !(['localhost', '127.0.0.1'].includes(target.hostname) && target.protocol === 'http:')) throw Error('云函数地址必须使用 HTTPS')
