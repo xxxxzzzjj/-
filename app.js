@@ -36,9 +36,14 @@ function updateNoticePreview() {
   preview.style.fontSize = `${Math.min(28, Math.max(10, Number($('notice-size').value) || 12))}px`
   preview.style.fontWeight = $('notice-bold').checked ? '700' : '400'
 }
+function noticeStatus(message, error = false) {
+  const target = $('notice-status')
+  if (target) { target.textContent = message; target.classList.toggle('error', error) }
+  status(message, error)
+}
 for (const id of ['notice-text', 'notice-color', 'notice-size', 'notice-bold']) $(id).addEventListener('input', updateNoticePreview)
 async function loadNotice() {
-  status('正在读取公告…')
+  noticeStatus('正在读取公告…')
   const result = await api('admin.notice.get')
   const notice = result.notice || {}
   $('notice-text').value = notice.text || ''
@@ -46,18 +51,19 @@ async function loadNotice() {
   $('notice-size').value = Number(notice.fontSize) >= 10 && Number(notice.fontSize) <= 28 ? Number(notice.fontSize) : 12
   $('notice-bold').checked = notice.bold === true
   updateNoticePreview()
-  status('已读取云端公告。')
+  noticeStatus('已读取云端公告。')
 }
-$('notice-load').addEventListener('click', async () => { try { await loadNotice() } catch (error) { handleError(error) } })
+$('notice-load').addEventListener('click', async () => { try { await loadNotice() } catch (error) { handleError(error); noticeStatus($('status').textContent, true) } })
 $('notice-save').addEventListener('click', async () => {
+  const button = $('notice-save')
   try {
     const fontSize = Number($('notice-size').value)
     if (!Number.isInteger(fontSize) || fontSize < 10 || fontSize > 28) throw Error('字号请输入 10 至 28 的整数')
     if ($('notice-text').value.length > 4000) throw Error('公告最多 4000 个字符')
-    status('正在保存公告…')
+    button.disabled = true; button.textContent = '保存中…'; noticeStatus('正在保存公告…')
     await api('admin.notice.set', { text: $('notice-text').value, color: $('notice-color').value, fontSize, bold: $('notice-bold').checked })
-    status('公告已保存，插件下次打开公告窗时同步。')
-  } catch (error) { handleError(error) }
+    noticeStatus('公告已保存，插件下次打开公告窗时同步。')
+  } catch (error) { handleError(error); noticeStatus($('status').textContent, true) } finally { button.disabled = false; button.textContent = '保存公告' }
 })
 updateNoticePreview()
 
