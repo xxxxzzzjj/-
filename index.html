@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <title>皮蛋 · 卡密管理</title>
-  <link rel="stylesheet" href="style.css?v=20261117-2">
-  <link rel="stylesheet" href="mobile.css?v=20261117-2">
-  <script src="app.js?v=20261117-2" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261119-1">
+  <link rel="stylesheet" href="mobile.css?v=20261119-1">
+  <script src="app.js?v=20261119-1" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -54,6 +54,30 @@
       <div class="notice-preview-wrap"><span>预览</span><div id="notice-preview" class="notice-preview">公告预览</div></div>
       <div id="notice-status" class="status" role="status" aria-live="polite">设置连接信息后可读取或保存公告。</div>
     </section>
+    <section class="notice-editor" aria-labelledby="contributors-title">
+      <div class="section-title"><div><h2 id="contributors-title">插件参与大佬</h2><p>参与大佬同步到插件参与大佬窗口，可设置颜色、字号、粗体和换行</p></div><span class="section-number">03</span></div>
+      <label>参与大佬文字<textarea id="contributors-text" rows="5" maxlength="4000" placeholder="输入要显示在插件参与大佬窗口中的内容"></textarea></label>
+      <div class="notice-options">
+        <label>文字颜色<input id="contributors-color" type="color" value="#2FC7B5"></label>
+        <label>字号<input id="contributors-size" type="number" min="10" max="28" step="1" value="12"></label>
+        <label class="check-label"><input id="contributors-bold" type="checkbox"><span>加粗</span></label>
+        <button id="contributors-load" class="secondary">读取参与大佬</button>
+        <button id="contributors-save" class="primary">保存参与大佬</button>
+      </div>
+      <div class="notice-preview-wrap"><span>预览</span><div id="contributors-preview" class="notice-preview">参与大佬预览</div></div>
+      <div id="contributors-status" class="status" role="status" aria-live="polite">设置连接信息后可读取或保存参与大佬。</div>
+    </section>
+
+    <section class="notice-editor" aria-labelledby="update-title">
+      <div class="section-title"><div><h2 id="update-title">在线更新</h2><p>北京时间 · 精确到小时，忽略分秒</p></div><span class="section-number">04</span></div>
+      <div class="notice-options"><label>更新时间<input id="update-hour" type="datetime-local" step="3600"></label></div>
+      <label>更新页面链接<input id="update-page" type="url" value="https://my.feishu.cn/wiki/ZIIbwZguIivetdkPtGsc8PqAnPg?from=from_copylink"></label>
+      <p>飞书页面保留“C盘：链接”和“根目录：链接”。C 盘 ZIP 内只有 DSHCdrPlugin 文件夹；根目录 ZIP 内只有 CDRPlugin.cpg。两个包需来自同一份保护版发布。</p>
+      <div id="update-message-editors"></div>
+      <div class="notice-options"><button id="update-load" class="secondary">读取更新设置</button><button id="update-save" class="primary">保存更新设置</button></div>
+      <div id="update-status" class="status" role="status" aria-live="polite">尚未读取。发布前请先上传两个更新包，再保存更新时间。</div>
+    </section>
+
     <section class="notice-editor" aria-labelledby="access-title">
       <div class="section-title"><div><h2 id="access-title">获取测试卡密</h2><p>用户点击插件中的“获取测试卡密”后，复制这里最新的内容。</p></div><span class="section-number">04</span></div>
       <label>领取内容<textarea id="access-text" rows="4" maxlength="10000" placeholder="可以粘贴测试卡密、网站或说明；保存为空将停止提供内容。"></textarea></label>

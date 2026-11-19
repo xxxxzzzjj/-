@@ -276,3 +276,74 @@ async function accessRequest(save) {
 }
 $('access-load').addEventListener('click', () => accessRequest(false))
 $('access-save').addEventListener('click', () => accessRequest(true))
+
+function updateContributorsPreview() {
+  const preview = $('contributors-preview')
+  preview.textContent = $('contributors-text').value || '参与大佬预览'
+  preview.style.color = $('contributors-color').value
+  preview.style.fontSize = `${Math.min(28, Math.max(10, Number($('contributors-size').value) || 12))}px`
+  preview.style.fontWeight = $('contributors-bold').checked ? '700' : '400'
+}
+function contributorsStatus(message, error = false) {
+  const target = $('contributors-status')
+  if (target) { target.textContent = message; target.classList.toggle('error', error) }
+  status(message, error)
+}
+for (const id of ['contributors-text', 'contributors-color', 'contributors-size', 'contributors-bold']) $(id).addEventListener('input', updateContributorsPreview)
+async function loadContributors() {
+  contributorsStatus('正在读取参与大佬…')
+  const result = await api('admin.contributors.get')
+  const notice = result.notice || {}
+  $('contributors-text').value = notice.text || ''
+  $('contributors-color').value = /^#[\da-f]{6}$/i.test(notice.color || '') ? notice.color : '#FF5555'
+  $('contributors-size').value = Number(notice.fontSize) >= 10 && Number(notice.fontSize) <= 28 ? Number(notice.fontSize) : 12
+  $('contributors-bold').checked = notice.bold === true
+  updateContributorsPreview()
+  contributorsStatus('已读取云端参与大佬。')
+}
+$('contributors-load').addEventListener('click', async () => { try { await loadContributors() } catch (error) { handleError(error); contributorsStatus($('status').textContent, true) } })
+$('contributors-save').addEventListener('click', async () => {
+  const button = $('contributors-save')
+  try {
+    const fontSize = Number($('contributors-size').value)
+    if (!Number.isInteger(fontSize) || fontSize < 10 || fontSize > 28) throw Error('字号请输入 10 至 28 的整数')
+    if ($('contributors-text').value.length > 4000) throw Error('参与大佬最多 4000 个字符')
+    button.disabled = true; button.textContent = '保存中…'; contributorsStatus('正在保存参与大佬…')
+    await api('admin.contributors.set', { text: $('contributors-text').value, color: $('contributors-color').value, fontSize, bold: $('contributors-bold').checked })
+    contributorsStatus('参与大佬已保存。插件会复用 6 小时本地缓存，需要立即同步可在参与大佬内点击“刷新参与大佬”。')
+  } catch (error) { handleError(error); contributorsStatus($('status').textContent, true) } finally { button.disabled = false; button.textContent = '保存参与大佬' }
+})
+updateContributorsPreview()
+
+
+function updateAdminStatus(text, error = false) { const e = $('update-status'); e.textContent = text; e.classList.toggle('error', error) }
+for (const [id, title, fallback] of [['current', '已是最新版时的弹窗内容', '当前已经是最新版本。'], ['available', '发现新版本时的提示内容', '发现新版本，请保存文档并关闭所有 CorelDRAW 后开始更新。']]) {
+  const box = document.createElement('div'); box.className = 'notice-editor'
+  const heading = document.createElement('h3'); heading.textContent = title; box.append(heading)
+  const text = document.createElement('textarea'); text.id = `update-${id}-text`; text.maxLength = 4000; text.value = fallback; text.rows = 3; box.append(text)
+  const options = document.createElement('div'); options.className = 'notice-options'
+  options.innerHTML = `<label>文字颜色<input id="update-${id}-color" type="color" value="#2FC7B5"></label><label>字号<input id="update-${id}-size" type="number" min="10" max="28" value="12"></label><label class="check-label"><input id="update-${id}-bold" type="checkbox">加粗</label>`
+  box.append(options); const preview = document.createElement('div'); preview.className = 'notice-preview'; box.append(preview)
+  const render = () => { preview.textContent = text.value; preview.style.color = $(`update-${id}-color`).value; preview.style.fontSize = `${Math.max(10, Math.min(28, +$(`update-${id}-size`).value || 12))}px`; preview.style.fontWeight = $(`update-${id}-bold`).checked ? '700' : '400' }
+  box.addEventListener('input', render); $('update-message-editors').append(box); render()
+}
+function readUpdateMessage(id) {
+  const fontSize = Number($(`update-${id}-size`).value)
+  if (!Number.isInteger(fontSize) || fontSize < 10 || fontSize > 28) throw Error('字号请输入 10 至 28 的整数')
+  return { text: $(`update-${id}-text`).value, color: $(`update-${id}-color`).value, fontSize, bold: $(`update-${id}-bold`).checked }
+}
+$('update-load').addEventListener('click', async () => {
+  const button = $('update-load'); button.disabled = true
+  try { const { update = {} } = await api('admin.update.get'); $('update-hour').value = update.releaseHour ? update.releaseHour.slice(0, 13) + ':00' : ''; $('update-page').value = update.pageUrl || $('update-page').defaultValue
+    for (const id of ['current', 'available']) { const row = update[id] || {}; $(`update-${id}-text`).value = row.text || ''; $(`update-${id}-color`).value = row.color || '#2FC7B5'; $(`update-${id}-size`).value = row.fontSize || 12; $(`update-${id}-bold`).checked = row.bold === true; $(`update-${id}-text`).dispatchEvent(new Event('input', { bubbles: true })) }
+    updateAdminStatus('已读取云端更新设置。')
+  } catch (error) { handleError(error); updateAdminStatus($('status').textContent, true) } finally { button.disabled = false }
+})
+$('update-save').addEventListener('click', async () => {
+  const button = $('update-save'); button.disabled = true
+  try { const releaseHour = $('update-hour').value.slice(0, 13), pageUrl = new URL($('update-page').value.trim())
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}$/.test(releaseHour)) throw Error('请填写更新时间')
+    if (pageUrl.protocol !== 'https:') throw Error('更新页面必须使用 HTTPS')
+    await api('admin.update.set', { releaseHour, pageUrl: pageUrl.href, current: readUpdateMessage('current'), available: readUpdateMessage('available') }); $('update-hour').value = releaseHour + ':00'; updateAdminStatus('更新设置已保存。客户端按北京时间的年月日和小时比较版本。')
+  } catch (error) { handleError(error); updateAdminStatus($('status').textContent, true) } finally { button.disabled = false }
+})
