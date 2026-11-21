@@ -104,6 +104,7 @@
     <div id="details-content" hidden>
       <dl class="detail-overview"><div><dt>卡密 ID</dt><dd id="detail-id"></dd></div><div><dt>绑定状态</dt><dd id="detail-machine"></dd></div><div><dt>签名期限</dt><dd id="detail-signed-expiry"></dd></div></dl>
       <div class="detail-edit-row"><label>客户备注<input id="detail-note" maxlength="200"></label><button data-action="note" class="secondary">保存备注</button></div>
+      <div class="detail-edit-row"><label>用户显示称号<input id="detail-display-title" maxlength="40" placeholder="留空显示原期限"></label><button data-action="display-title" class="secondary">保存称号</button></div>
       <section id="device-settings" class="detail-setting" hidden><div><h4>多设备上限</h4><p>最多允许同时绑定的电脑数量</p></div><label>台数<input id="detail-max-devices" type="number" min="1" max="99" step="1"></label><span id="device-count"></span><button data-action="devices" class="secondary">保存设备上限</button></section>
       <div id="device-list"></div>
       <section id="detail-bind-settings" class="detail-setting"><div><h4>用户解绑次数</h4><p id="detail-binds-used">已使用 0 次</p></div><label class="check-label"><input id="detail-unlimited-binds" type="checkbox"><span>不限次数</span></label><label>允许解绑次数<input id="detail-max-binds" type="number" min="0" max="99" step="1"></label><button data-action="binds" class="secondary">保存解绑次数</button><button data-action="reset" class="secondary">重置已用次数</button></section>

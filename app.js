@@ -162,7 +162,7 @@ function isMulti(row) { return !!row.multi || String(row.signedPayload || '').st
 function cell(row, text) { const td = document.createElement('td'); td.textContent = text; row.append(td); return td }
 function render() {
   const filter = $('filter').value.trim().toLowerCase(), mode = $('state-filter').value
-  const rows = state.rows.filter(row => (mode === 'all' || cardState(row) === mode) && [row.note, row._id, row.boundMachine, ...(row.boundMachines || [])].some(v => String(v || '').toLowerCase().includes(filter)))
+  const rows = state.rows.filter(row => (mode === 'all' || cardState(row) === mode) && [row.note, row.displayTitle, row._id, row.boundMachine, ...(row.boundMachines || [])].some(v => String(v || '').toLowerCase().includes(filter)))
   $('record-count').textContent = `共 ${state.rows.length} 条记录 · 当前显示 ${rows.length} 条`
   const body = $('records'); body.replaceChildren()
   if (!rows.length) { const tr = document.createElement('tr'), td = cell(tr, state.rows.length ? '没有符合条件的记录' : '暂无记录'); td.colSpan = 5; td.className = 'empty'; body.append(tr) }
@@ -184,7 +184,7 @@ function render() {
   if (row) {
     const trial = isTrial(row), multi = isMulti(row), devices = Array.isArray(row.boundMachines) ? row.boundMachines : []
     $('detail-id').textContent = row._id; $('detail-machine').textContent = multi ? (row.maxDevices == null ? '旧版不限设备' : `已绑定 ${devices.length} 台`) : row.boundMachine || '未绑定'; $('detail-signed-expiry').textContent = dateText(row.sigExpiresUtc); $('detail-max-binds').value = Number(row.maxBinds) === -1 ? 1 : row.maxBinds ?? 1; $('detail-unlimited-binds').checked = Number(row.maxBinds) === -1; $('detail-max-binds').disabled = Number(row.maxBinds) === -1; $('detail-binds-used').textContent = `已使用 ${row.bindCount ?? 0} 次`
-    $('detail-note').value = row.note || ''
+    $('detail-note').value = row.note || ''; $('detail-display-title').value = row.displayTitle || ''
     $('trial-help').hidden = !trial; $('detail-bind-settings').hidden = trial; $('device-settings').hidden = !multi || trial; $('detail-max-devices').value = row.maxDevices ?? 2; $('device-count').textContent = row.maxDevices == null ? '当前不限台数' : `已绑定 ${devices.length} 台`; $('device-list').replaceChildren()
     $('detail-signed-expiry').previousElementSibling.textContent = trial ? '体验期限' : '签名到期'
     if (trial) { $('detail-machine').textContent = '每台电脑独立体验一次'; $('detail-signed-expiry').textContent = `首次兑换起 ${row.trialDays || '?'} 天` }
@@ -245,6 +245,7 @@ document.querySelector('#details-content').addEventListener('click', async event
     }
     let op, extra = {}
     if (action === 'note') { const value = $('detail-note').value.trim(); if (value.length > 200) throw Error('备注最多 200 个字符'); op = 'setNote'; extra.note = value }
+    if (action === 'display-title') { const value = $('detail-display-title').value.trim(); if (value.length > 40) throw Error('显示称号最多 40 个字符'); op = 'setDisplayTitle'; extra.displayTitle = value }
     if (action === 'rebind') { if (!confirm('确定解绑？指定机器码签发的卡仍只能用于原电脑。')) return; op = 'rebind' }
     if (action === 'binds') { const value = $('detail-max-binds').value; if (!$('detail-unlimited-binds').checked && (!/^\d+$/.test(value) || +value > 99)) throw Error('请输入 0 至 99 的整数'); op = 'setMaxBinds'; extra.maxBinds = $('detail-unlimited-binds').checked ? -1 : +value }
     if (action === 'devices') { const value = $('detail-max-devices').value; if (!/^\d+$/.test(value) || +value < 1 || +value > 99) throw Error('请输入 1 至 99 的整数'); if (row.maxDevices == null && !confirm('旧卡此前没有记录设备名单。设置上限后，原有用户需要重新兑换，按先后占用设备名额。继续？')) return; op = 'setMaxDevices'; extra.maxDevices = +value }
