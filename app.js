@@ -38,7 +38,29 @@ $('detail-close').addEventListener('click', () => $('detail').close())
 $('detail').addEventListener('click', event => { if (event.target === $('detail')) { const r = $('detail').getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) $('detail').close() } })
 updateIssueScope()
 $('settings-open').addEventListener('click', () => $('settings').showModal())
-$('settings-save').addEventListener('click', () => status('连接设置已更新，点击刷新记录。'))
+$('settings-save').addEventListener('click', () => status('连接设置已应用，仅在当前页面有效；关闭页面后需要重新输入。'))
+
+function activateMainTab(name) {
+  $('workspace').hidden = name === 'settings'
+  $('settings-panel').hidden = name !== 'settings'
+  $('workspace').dataset.view = name === 'issue' ? 'issue' : 'records'
+  document.querySelector('main').dataset.view = name
+  document.querySelectorAll('[data-main-tab]').forEach(button => {
+    const active = button.dataset.mainTab === name
+    button.classList.toggle('active', active)
+    button.setAttribute('aria-selected', String(active))
+  })
+}
+document.querySelectorAll('[data-main-tab]').forEach(button => button.addEventListener('click', () => activateMainTab(button.dataset.mainTab)))
+document.querySelectorAll('[data-settings-tab]').forEach(button => button.addEventListener('click', () => {
+  const target = button.dataset.settingsTab
+  document.querySelectorAll('[data-settings-tab]').forEach(tab => {
+    const active = tab === button
+    tab.classList.toggle('active', active)
+    tab.setAttribute('aria-selected', String(active))
+  })
+  document.querySelectorAll('[data-settings-panel]').forEach(panel => { panel.hidden = panel.dataset.settingsPanel !== target })
+}))
 
 function updateNoticePreview() {
   const preview = $('notice-preview')
@@ -158,9 +180,11 @@ function render() {
   $('details-content').hidden = !row
   $('selected-label').textContent = row ? row.note || '未填写备注' : '选择一条记录进行管理'
   $('selected-state').textContent = row ? stateText(row) : ''
+  $('selected-state').className = row ? `badge ${cardState(row)}` : 'badge'
   if (row) {
     const trial = isTrial(row), multi = isMulti(row), devices = Array.isArray(row.boundMachines) ? row.boundMachines : []
     $('detail-id').textContent = row._id; $('detail-machine').textContent = multi ? (row.maxDevices == null ? '旧版不限设备' : `已绑定 ${devices.length} 台`) : row.boundMachine || '未绑定'; $('detail-signed-expiry').textContent = dateText(row.sigExpiresUtc); $('detail-max-binds').value = Number(row.maxBinds) === -1 ? 1 : row.maxBinds ?? 1; $('detail-unlimited-binds').checked = Number(row.maxBinds) === -1; $('detail-max-binds').disabled = Number(row.maxBinds) === -1; $('detail-binds-used').textContent = `已使用 ${row.bindCount ?? 0} 次`
+    $('detail-note').value = row.note || ''
     $('trial-help').hidden = !trial; $('detail-bind-settings').hidden = trial; $('device-settings').hidden = !multi || trial; $('detail-max-devices').value = row.maxDevices ?? 2; $('device-count').textContent = row.maxDevices == null ? '当前不限台数' : `已绑定 ${devices.length} 台`; $('device-list').replaceChildren()
     $('detail-signed-expiry').previousElementSibling.textContent = trial ? '体验期限' : '签名到期'
     if (trial) { $('detail-machine').textContent = '每台电脑独立体验一次'; $('detail-signed-expiry').textContent = `首次兑换起 ${row.trialDays || '?'} 天` }
@@ -213,13 +237,14 @@ document.querySelector('#details-content').addEventListener('click', async event
     if (action === 'logs') {
       const result = await api('admin.query', { keyId: row._id, logLimit: 50 })
       $('logs').replaceChildren()
+      for (const device of result.devices || []) { const line = document.createElement('div'); line.textContent = `设备：${device.deviceName || '名称未知'}　设备机器码：${device.machine}　${device.isBound ? '绑定中' : '已解绑'}　最近绑定：${dateText(device.boundAtUtc || device.lastBoundUtc)}`; $('logs').append(line) }
       for (const entry of result.trials || []) { const line = document.createElement('div'); line.textContent = `${entry.machine}　首次：${dateText(entry.firstBoundUtc)}　到期：${dateText(entry.expiresUtc)}　${entry.bound ? '已绑定' : '已解绑'}`; $('logs').append(line) }
       for (const entry of result.logs || []) { const line = document.createElement('div'); line.textContent = `${dateText(entry.ts)}　${entry.machine || '—'}　${entry.ver || ''}`; $('logs').append(line) }
       if (!$('logs').childNodes.length) $('logs').textContent = '暂无联网验证记录。'
       $('logs').hidden = !$('logs').hidden; return
     }
     let op, extra = {}
-    if (action === 'note') { const value = prompt('修改备注', row.note || ''); if (value === null) return; op = 'setNote'; extra.note = value }
+    if (action === 'note') { const value = $('detail-note').value.trim(); if (value.length > 200) throw Error('备注最多 200 个字符'); op = 'setNote'; extra.note = value }
     if (action === 'rebind') { if (!confirm('确定解绑？指定机器码签发的卡仍只能用于原电脑。')) return; op = 'rebind' }
     if (action === 'binds') { const value = $('detail-max-binds').value; if (!$('detail-unlimited-binds').checked && (!/^\d+$/.test(value) || +value > 99)) throw Error('请输入 0 至 99 的整数'); op = 'setMaxBinds'; extra.maxBinds = $('detail-unlimited-binds').checked ? -1 : +value }
     if (action === 'devices') { const value = $('detail-max-devices').value; if (!/^\d+$/.test(value) || +value < 1 || +value > 99) throw Error('请输入 1 至 99 的整数'); if (row.maxDevices == null && !confirm('旧卡此前没有记录设备名单。设置上限后，原有用户需要重新兑换，按先后占用设备名额。继续？')) return; op = 'setMaxDevices'; extra.maxDevices = +value }

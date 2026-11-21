@@ -1,0 +1,107 @@
+.topbar{height:58px;padding:0 24px}
+main{padding:20px 24px 16px}
+.page-heading{align-items:center;margin-bottom:14px}
+.page-heading h1{font-size:22px;margin:4px 0}
+.main-tabs,.settings-tabs{display:grid;gap:6px;margin:0 0 14px}
+.main-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.settings-tabs{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:2px}
+.main-tabs button,.settings-tabs button{min-width:0;min-height:38px;padding:8px 12px;border:1px solid var(--border);border-radius:7px;background:var(--panel);color:var(--muted);font:inherit;white-space:nowrap}
+.main-tabs button.active,.settings-tabs button.active{border-color:var(--accent);background:var(--accent-dark);color:var(--accent);font-weight:700}
+.main-tabs button:hover,.settings-tabs button:hover{border-color:var(--accent)}
+[hidden]{display:none!important}
+.workspace{min-height:0;border:0}
+main[data-view=records] .workspace{display:block}
+main[data-view=records] .issue-area{display:none}
+main[data-view=records] .records-area{padding:15px;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+main[data-view=records] .section-title{margin-bottom:12px}
+main[data-view=records] .section-number{display:none}
+.toolbar{gap:7px;margin-bottom:10px}
+.toolbar-menu{position:relative;flex:0 0 auto}
+.toolbar-menu summary{min-height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid #344a46;border-radius:6px;background:#192725;color:#d1e0dc;cursor:pointer;list-style:none;white-space:nowrap}
+.toolbar-menu summary::-webkit-details-marker{display:none}
+.toolbar-menu[open] summary,.toolbar-menu summary:hover{border-color:var(--accent)}
+.toolbar-menu>div{position:absolute;right:0;top:calc(100% + 5px);z-index:4;display:grid;gap:6px;min-width:150px;padding:7px;border:1px solid var(--border);border-radius:7px;background:var(--panel);box-shadow:0 8px 22px #0007}
+.toolbar-menu:not([open])>div{display:none}
+.toolbar-menu button{width:100%;text-align:left}
+.table-wrap{max-height:min(64dvh,700px);min-height:180px;border-radius:7px}
+main[data-view=issue] .workspace{display:grid;grid-template-columns:minmax(0,820px);justify-content:center;min-height:0}
+main[data-view=issue] .records-area{display:none}
+main[data-view=issue] .issue-area{display:block;min-width:0;padding:18px;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+main[data-view=issue] .section-title{margin-bottom:14px}
+main[data-view=issue] .section-number{display:none}
+main[data-view=issue] #issue-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+main[data-view=issue] #issue-form>label:nth-child(1),main[data-view=issue] #issue-form>label:nth-child(2),main[data-view=issue] #machine-label,main[data-view=issue] #trial-days-label,main[data-view=issue] #issue-form>.full{grid-column:1/-1}
+main[data-view=issue] #issue-form .field-pair{align-self:start}
+main[data-view=issue] .result{margin-top:14px;padding-top:12px}
+#settings-panel{border-top:1px solid var(--border);padding-top:12px}
+.settings-page{max-width:1040px;margin:0 auto;padding:16px;border:1px solid var(--border);border-radius:8px;background:var(--panel)}
+.settings-page .section-title{margin-bottom:14px}
+.settings-page .section-number{display:none}
+.settings-page .notice-options{gap:10px;align-items:end}
+.settings-page .notice-options button{min-width:140px}
+.settings-page .notice-preview-wrap{margin-top:12px}
+#update-message-editors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+#update-message-editors>.notice-editor{min-width:0;padding:12px;border:1px solid var(--border);border-radius:7px;background:var(--field)}
+.card-dialog{max-height:88dvh;border-radius:10px}
+.card-dialog .detail-head{padding:14px 18px}
+.card-dialog #details-content{padding:14px 18px 18px}
+.card-dialog .detail-overview{gap:8px;margin:0 0 12px}
+.card-dialog .detail-overview>div,.detail-edit-row,.detail-setting{min-width:0;padding:10px;border:1px solid var(--border);border-radius:7px;background:var(--field)}
+.card-dialog .detail-edit-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin-bottom:9px}
+.card-dialog .detail-edit-row label,.card-dialog .detail-setting label{margin:0}
+.card-dialog .detail-setting{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:end;gap:10px;margin:9px 0}
+.card-dialog #device-settings{grid-template-columns:minmax(0,1fr) auto auto auto}
+.card-dialog .detail-setting h4{margin:0 0 4px;font-size:13px}
+.card-dialog .detail-setting p{color:var(--muted);font-size:12px}
+.card-dialog .detail-setting input:not([type=checkbox]){width:116px}
+.card-dialog .detail-actions{display:flex;align-items:center;gap:8px;margin-top:12px}
+.card-dialog .detail-actions>button{flex:0 0 auto}
+.card-dialog .more-actions{position:relative;margin-left:auto}
+.card-dialog .more-actions summary{min-height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid #344a46;border-radius:6px;background:#192725;color:#d1e0dc;cursor:pointer;list-style:none;white-space:nowrap}
+.card-dialog .more-actions summary::-webkit-details-marker{display:none}
+.card-dialog .more-actions-menu{position:absolute;right:0;bottom:calc(100% + 5px);z-index:3;display:grid;grid-template-columns:1fr 1fr;gap:6px;width:min(370px,calc(100vw - 48px));padding:8px;border:1px solid var(--border);border-radius:7px;background:var(--panel);box-shadow:0 8px 22px #0007}
+.card-dialog .more-actions:not([open])>.more-actions-menu{display:none}
+.card-dialog .device-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.card-dialog #logs{margin-top:12px;padding:10px;border:1px solid var(--border);border-radius:7px;overflow-wrap:anywhere}
+.card-dialog #logs>div{padding:6px 0;border-bottom:1px solid var(--border);line-height:1.5}
+.card-dialog #logs>div:last-child{border-bottom:0}
+@media(max-width:760px){
+  .topbar{height:auto;min-height:54px;padding:8px 14px}
+  .top-actions{gap:8px}
+  main{padding:15px 14px}
+  .page-heading{align-items:center;gap:10px}
+  .page-heading p{display:none}
+  .main-tabs,.settings-tabs{gap:5px}
+  .main-tabs button,.settings-tabs button{padding:7px 4px;font-size:12px}
+  main[data-view=records] .records-area{padding:11px}
+  .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .toolbar input[type=search]{grid-column:1/-1}
+  .toolbar-menu{grid-column:2;grid-row:2}
+  .table-wrap{max-height:62dvh;min-height:160px}
+  main[data-view=issue] .issue-area{padding:13px}
+  main[data-view=issue] #issue-form{grid-template-columns:minmax(0,1fr);gap:0}
+  main[data-view=issue] #issue-form>*{grid-column:1}
+  main[data-view=issue] #issue-form .field-pair{grid-column:1}
+  .settings-page{padding:12px}
+  #update-message-editors{grid-template-columns:1fr}
+  .card-dialog .detail-overview{grid-template-columns:1fr}
+  .card-dialog .detail-setting{grid-template-columns:minmax(0,1fr) auto;align-items:end}
+  .card-dialog .detail-setting>div{grid-column:1/-1}
+  .card-dialog .detail-setting label{min-width:0}
+  .card-dialog .detail-setting button{grid-column:1/-1;width:100%}
+  .card-dialog .detail-edit-row{grid-template-columns:minmax(0,1fr)}
+  .card-dialog .detail-edit-row button{width:100%}
+  .card-dialog .detail-actions{display:grid;grid-template-columns:1fr 1fr}
+  .card-dialog .more-actions{margin-left:0}
+  .card-dialog .more-actions summary{justify-content:center}
+  .card-dialog .more-actions-menu{grid-template-columns:1fr;width:min(300px,calc(100vw - 48px))}
+}
+@media(max-width:420px){
+  .brand{gap:7px}
+  .brand-mark{width:29px;height:29px}
+  .brand div span{display:none}
+  .connection{font-size:11px}
+  #settings-open,.page-heading #refresh{padding:7px 8px;font-size:12px}
+  .card-dialog .detail-actions{grid-template-columns:1fr}
+  .card-dialog .detail-actions>button,.card-dialog .more-actions summary{width:100%}
+}

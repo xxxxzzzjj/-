@@ -5,18 +5,24 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <title>皮蛋 · 卡密管理</title>
-  <link rel="stylesheet" href="style.css?v=20261119-1">
-  <link rel="stylesheet" href="mobile.css?v=20261119-1">
-  <script src="app.js?v=20261119-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261121-1">
+  <link rel="stylesheet" href="mobile.css?v=20261121-1">
+  <link rel="stylesheet" href="layout.css?v=20261121-1">
+  <script src="app.js?v=20261121-1" defer></script>
 </head>
 <body>
   <header class="topbar">
     <div class="brand"><span class="brand-mark">P</span><div><strong>皮蛋设计</strong><span>卡密管理中心</span></div></div>
     <div class="top-actions"><span id="connection" class="connection">未连接</span><button id="settings-open" class="secondary">连接设置</button></div>
   </header>
-  <main>
-    <div class="page-heading"><div><div class="eyebrow">LICENSE MANAGEMENT</div><h1>卡密管理</h1><p>签发、查询和管理客户授权</p></div><button id="refresh" class="secondary">↻　刷新记录</button></div>
-    <section class="workspace">
+  <main data-view="records">
+    <div class="page-heading"><div><div class="eyebrow">LICENSE MANAGEMENT</div><h1>卡密管理</h1><p>签发、查询和管理客户授权</p></div><button id="refresh" class="secondary">刷新记录</button></div>
+    <nav class="main-tabs" role="tablist" aria-label="管理模块">
+      <button type="button" class="active" role="tab" aria-selected="true" data-main-tab="records">卡密记录</button>
+      <button type="button" role="tab" aria-selected="false" data-main-tab="issue">签发卡密</button>
+      <button type="button" role="tab" aria-selected="false" data-main-tab="settings">插件设置</button>
+    </nav>
+    <section class="workspace" id="workspace" data-view="records">
       <aside class="issue-area">
         <div class="section-title"><div><h2>签发卡密</h2><p>创建新的客户授权</p></div><span class="section-number">01</span></div>
         <form id="issue-form">
@@ -36,57 +42,85 @@
       </aside>
       <section class="records-area">
         <div class="section-title"><div><h2>云端记录</h2><p id="record-count">连接后查看卡密记录</p></div><span class="section-number">02</span></div>
-        <div class="toolbar"><input id="filter" type="search" placeholder="搜索名称、卡密 ID 或机器码"><select id="state-filter" aria-label="筛选状态"><option value="all">全部状态</option><option value="active">正常</option><option value="expired">已到期</option><option value="revoked">已停用</option></select><button id="import" class="secondary">导入旧记录</button><button id="export" class="secondary">导出记录</button><input id="import-file" type="file" accept=".json,application/json" hidden></div>
+        <div class="toolbar"><input id="filter" type="search" placeholder="搜索名称、卡密 ID 或机器码"><select id="state-filter" aria-label="筛选状态"><option value="all">全部状态</option><option value="active">正常</option><option value="expired">已到期</option><option value="revoked">已停用</option></select><details class="toolbar-menu"><summary>记录工具</summary><div><button id="import" class="secondary">导入旧记录</button><button id="export" class="secondary">导出记录</button></div></details><input id="import-file" type="file" accept=".json,application/json" hidden></div>
         <div class="table-wrap"><table><thead><tr><th>名称 / 卡密 ID</th><th>绑定状态</th><th>换绑</th><th>到期时间</th><th>状态</th></tr></thead><tbody id="records"><tr><td colspan="5" class="empty">请输入连接信息并刷新记录</td></tr></tbody></table></div>
-        <p class="detail-hint">点击任意记录直接打开卡密管理窗口。</p>
       </section>
     </section>
-    <section class="notice-editor" aria-labelledby="notice-title">
+    <div id="settings-panel" hidden>
+      <nav class="settings-tabs" role="tablist" aria-label="插件设置分类">
+        <button type="button" class="active" role="tab" aria-selected="true" data-settings-tab="notice-panel">公告</button>
+        <button type="button" role="tab" aria-selected="false" data-settings-tab="contributors-panel">参与人员</button>
+        <button type="button" role="tab" aria-selected="false" data-settings-tab="update-panel">在线更新</button>
+        <button type="button" role="tab" aria-selected="false" data-settings-tab="access-panel">测试卡密</button>
+      </nav>
+    <section class="notice-editor settings-page" id="notice-panel" data-settings-panel="notice-panel" aria-labelledby="notice-title">
       <div class="section-title"><div><h2 id="notice-title">插件公告</h2><p>公告同步到插件公告窗口，可设置颜色、字号、粗体和换行</p></div><span class="section-number">03</span></div>
       <label>公告文字<textarea id="notice-text" rows="5" maxlength="4000" placeholder="输入要显示在插件公告窗口中的内容"></textarea></label>
       <div class="notice-options">
         <label>文字颜色<input id="notice-color" type="color" value="#FF5555"></label>
         <label>字号<input id="notice-size" type="number" min="10" max="28" step="1" value="12"></label>
         <label class="check-label"><input id="notice-bold" type="checkbox"><span>加粗</span></label>
-        <button id="notice-load" class="secondary">读取公告</button>
-        <button id="notice-save" class="primary">保存公告</button>
+        <button id="notice-load" class="secondary">读取云端公告</button>
+        <button id="notice-save" class="primary">保存公告到云端</button>
       </div>
       <div class="notice-preview-wrap"><span>预览</span><div id="notice-preview" class="notice-preview">公告预览</div></div>
       <div id="notice-status" class="status" role="status" aria-live="polite">设置连接信息后可读取或保存公告。</div>
     </section>
-    <section class="notice-editor" aria-labelledby="contributors-title">
+    <section class="notice-editor settings-page" id="contributors-panel" data-settings-panel="contributors-panel" aria-labelledby="contributors-title" hidden>
       <div class="section-title"><div><h2 id="contributors-title">插件参与大佬</h2><p>参与大佬同步到插件参与大佬窗口，可设置颜色、字号、粗体和换行</p></div><span class="section-number">03</span></div>
       <label>参与大佬文字<textarea id="contributors-text" rows="5" maxlength="4000" placeholder="输入要显示在插件参与大佬窗口中的内容"></textarea></label>
       <div class="notice-options">
         <label>文字颜色<input id="contributors-color" type="color" value="#2FC7B5"></label>
         <label>字号<input id="contributors-size" type="number" min="10" max="28" step="1" value="12"></label>
         <label class="check-label"><input id="contributors-bold" type="checkbox"><span>加粗</span></label>
-        <button id="contributors-load" class="secondary">读取参与大佬</button>
-        <button id="contributors-save" class="primary">保存参与大佬</button>
+        <button id="contributors-load" class="secondary">读取云端名单</button>
+        <button id="contributors-save" class="primary">保存名单到云端</button>
       </div>
       <div class="notice-preview-wrap"><span>预览</span><div id="contributors-preview" class="notice-preview">参与大佬预览</div></div>
       <div id="contributors-status" class="status" role="status" aria-live="polite">设置连接信息后可读取或保存参与大佬。</div>
     </section>
 
-    <section class="notice-editor" aria-labelledby="update-title">
+    <section class="notice-editor settings-page" id="update-panel" data-settings-panel="update-panel" aria-labelledby="update-title" hidden>
       <div class="section-title"><div><h2 id="update-title">在线更新</h2><p>北京时间 · 精确到小时，忽略分秒</p></div><span class="section-number">04</span></div>
       <div class="notice-options"><label>更新时间<input id="update-hour" type="datetime-local" step="3600"></label></div>
       <label>更新页面链接<input id="update-page" type="url" value="https://my.feishu.cn/wiki/ZIIbwZguIivetdkPtGsc8PqAnPg?from=from_copylink"></label>
       <p>飞书页面保留“C盘：链接”和“根目录：链接”。C 盘 ZIP 内只有 DSHCdrPlugin 文件夹；根目录 ZIP 内只有 CDRPlugin.cpg。两个包需来自同一份保护版发布。</p>
       <div id="update-message-editors"></div>
-      <div class="notice-options"><button id="update-load" class="secondary">读取更新设置</button><button id="update-save" class="primary">保存更新设置</button></div>
+      <div class="notice-options"><button id="update-load" class="secondary">读取云端更新设置</button><button id="update-save" class="primary">保存更新设置到云端</button></div>
       <div id="update-status" class="status" role="status" aria-live="polite">尚未读取。发布前请先上传两个更新包，再保存更新时间。</div>
     </section>
 
-    <section class="notice-editor" aria-labelledby="access-title">
+    <section class="notice-editor settings-page" id="access-panel" data-settings-panel="access-panel" aria-labelledby="access-title" hidden>
       <div class="section-title"><div><h2 id="access-title">获取测试卡密</h2><p>用户点击插件中的“获取测试卡密”后，复制这里最新的内容。</p></div><span class="section-number">04</span></div>
       <label>领取内容<textarea id="access-text" rows="4" maxlength="10000" placeholder="可以粘贴测试卡密、网站或说明；保存为空将停止提供内容。"></textarea></label>
-      <div class="notice-options"><button id="access-load" class="secondary">读取内容</button><button id="access-save" class="primary">保存内容</button></div>
+      <div class="notice-options"><button id="access-load" class="secondary">读取云端内容</button><button id="access-save" class="primary">保存内容到云端</button></div>
       <div id="access-status" class="status" role="status" aria-live="polite">仅在点击时同步；修改后用户下次有效点击即可获取，无需等待缓存。</div>
     </section>
+    </div>
     <div id="status" class="status" role="status">准备就绪</div>
   </main>
-  <dialog class="card-dialog" id="detail" aria-labelledby="selected-label"><div class="detail-head"><div><h3>卡密详情</h3><p id="selected-label">选择一条记录进行管理</p></div><span id="selected-state"></span><button id="detail-close" class="icon-button" aria-label="关闭卡密详情">×</button></div><div id="details-content" hidden><dl><div><dt>卡密 ID</dt><dd id="detail-id"></dd></div><div><dt>绑定机器码</dt><dd id="detail-machine"></dd></div><div><dt>签名到期</dt><dd id="detail-signed-expiry"></dd></div></dl><div id="device-settings" class="bind-settings" hidden><label>最多绑定电脑数<input id="detail-max-devices" type="number" min="1" max="99" step="1"></label><button data-action="devices" class="secondary">保存台数</button><span id="device-count"></span></div><div id="device-list"></div><div id="detail-bind-settings" class="bind-settings"><label class="check-label"><input id="detail-unlimited-binds" type="checkbox"><span>不限解绑</span></label><label>允许解绑次数<input id="detail-max-binds" type="number" min="0" max="99" step="1"></label><button data-action="binds" class="secondary">保存次数</button><span id="detail-binds-used"></span><button data-action="reset" class="secondary">重置已用次数</button></div><div class="detail-actions"><button data-action="copy" class="secondary">复制卡密</button><button data-action="note" class="secondary">修改备注</button><button data-action="rebind" class="secondary">解绑</button><button data-action="expiry" class="secondary">修改期限</button><button data-action="toggle" class="secondary">停用 / 恢复</button><button data-action="logs" class="secondary">查看记录</button><button data-action="delete" class="secondary danger">删除卡密</button></div><div id="trial-help" hidden>每台电脑按首次兑换开始计时；解绑、重绑、重置次数均不会重置体验。</div><div id="logs" hidden></div></div></dialog>
-  <dialog id="settings"><form method="dialog" class="dialog-form"><div class="dialog-heading"><h2>连接设置</h2><button class="icon-button" aria-label="关闭" value="cancel">×</button></div><label>云函数地址<input id="endpoint" type="url" autocomplete="off"></label><label>管理令牌<input id="admin-token" type="password" autocomplete="off"></label><label>发卡口令<input id="signing-token" type="password" autocomplete="off"></label><p>令牌仅保存在当前页面内，关闭页面后需要重新输入。</p><div class="dialog-buttons"><button class="secondary" value="cancel">取消</button><button id="settings-save" class="primary" value="default">确认</button></div></form></dialog>
+  <dialog class="card-dialog" id="detail" aria-labelledby="selected-label">
+    <div class="detail-head"><div><h3>卡密详情</h3><p id="selected-label">选择一条记录进行管理</p></div><span id="selected-state" class="badge"></span><button id="detail-close" class="icon-button" aria-label="关闭卡密详情">×</button></div>
+    <div id="details-content" hidden>
+      <dl class="detail-overview"><div><dt>卡密 ID</dt><dd id="detail-id"></dd></div><div><dt>绑定状态</dt><dd id="detail-machine"></dd></div><div><dt>签名期限</dt><dd id="detail-signed-expiry"></dd></div></dl>
+      <div class="detail-edit-row"><label>客户备注<input id="detail-note" maxlength="200"></label><button data-action="note" class="secondary">保存备注</button></div>
+      <section id="device-settings" class="detail-setting" hidden><div><h4>多设备上限</h4><p>最多允许同时绑定的电脑数量</p></div><label>台数<input id="detail-max-devices" type="number" min="1" max="99" step="1"></label><span id="device-count"></span><button data-action="devices" class="secondary">保存设备上限</button></section>
+      <div id="device-list"></div>
+      <section id="detail-bind-settings" class="detail-setting"><div><h4>用户解绑次数</h4><p id="detail-binds-used">已使用 0 次</p></div><label class="check-label"><input id="detail-unlimited-binds" type="checkbox"><span>不限次数</span></label><label>允许解绑次数<input id="detail-max-binds" type="number" min="0" max="99" step="1"></label><button data-action="binds" class="secondary">保存解绑次数</button><button data-action="reset" class="secondary">重置已用次数</button></section>
+      <div class="detail-actions">
+        <button data-action="copy" class="primary">复制卡密</button>
+        <button data-action="logs" class="secondary">查看设备与联网记录</button>
+        <details class="more-actions"><summary>更多操作</summary><div class="more-actions-menu">
+          <button data-action="rebind" class="secondary">解绑单设备授权</button>
+          <button data-action="expiry" class="secondary">修改到期时间</button>
+          <button data-action="toggle" class="secondary">停用 / 恢复</button>
+          <button data-action="delete" class="secondary danger">删除卡密</button>
+        </div></details>
+      </div>
+      <div id="trial-help" hidden>每台电脑按首次兑换开始计时；解绑、重绑、重置次数均不会重置体验。</div>
+      <div id="logs" hidden></div>
+    </div>
+  </dialog>
+  <dialog id="settings"><form method="dialog" class="dialog-form"><div class="dialog-heading"><h2>连接设置</h2><button class="icon-button" aria-label="关闭" value="cancel">×</button></div><label>云函数地址<input id="endpoint" type="url" autocomplete="off"></label><label>管理令牌<input id="admin-token" type="password" autocomplete="off"></label><label>发卡口令<input id="signing-token" type="password" autocomplete="off"></label><p>令牌仅保存在当前页面内，关闭页面后需要重新输入。</p><div class="dialog-buttons"><button class="secondary" value="cancel">取消</button><button id="settings-save" class="primary" value="default">保存连接设置</button></div></form></dialog>
 </body>
 </html>
