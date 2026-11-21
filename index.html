@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="referrer" content="no-referrer">
   <title>皮蛋 · 卡密管理</title>
-  <link rel="stylesheet" href="style.css?v=20261121-1">
-  <link rel="stylesheet" href="mobile.css?v=20261121-1">
-  <link rel="stylesheet" href="layout.css?v=20261121-1">
-  <script src="app.js?v=20261121-1" defer></script>
+  <link rel="stylesheet" href="style.css?v=20261121-publish">
+  <link rel="stylesheet" href="mobile.css?v=20261121-publish">
+  <link rel="stylesheet" href="layout.css?v=20261121-publish">
+  <script src="app.js?v=20261121-publish" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -64,6 +64,7 @@
         <button id="notice-save" class="primary">保存公告到云端</button>
       </div>
       <div class="notice-preview-wrap"><span>预览</span><div id="notice-preview" class="notice-preview">公告预览</div></div>
+      <section class="announcement-image-editor" aria-label="公告展示图片"><div><h3>公告展示图片</h3><p>上传后统一展示给用户。透明底会保留，图片自动拉伸铺满展示区域。</p></div><div class="announcement-image-layout"><div class="announcement-image-preview"><img id="notice-image-preview" alt="尚未上传公告图片" hidden></div><div class="announcement-image-actions"><label class="image-picker">选择图片<input id="notice-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp"></label><span id="notice-image-name">支持 PNG / JPG / WebP / GIF / BMP</span><button id="notice-image-upload" class="primary" disabled>上传并发布图片</button><button id="notice-image-remove" class="secondary">移除云端图片</button><progress id="notice-image-progress" value="0" max="100" hidden></progress><span id="notice-image-status" role="status">图片通过云存储直传，避免占用云函数请求体。</span></div></div></section>
       <div id="notice-status" class="status" role="status" aria-live="polite">设置连接信息后可读取或保存公告。</div>
     </section>
     <section class="notice-editor settings-page" id="contributors-panel" data-settings-panel="contributors-panel" aria-labelledby="contributors-title" hidden>
@@ -106,6 +107,7 @@
       <div class="detail-edit-row"><label>客户备注<input id="detail-note" maxlength="200"></label><button data-action="note" class="secondary">保存备注</button></div>
       <div class="detail-edit-row"><label>用户显示称号<input id="detail-display-title" maxlength="40" placeholder="留空显示原期限"></label><button data-action="display-title" class="secondary">保存称号</button></div>
       <section id="device-settings" class="detail-setting" hidden><div><h4>多设备上限</h4><p>最多允许同时绑定的电脑数量</p></div><label>台数<input id="detail-max-devices" type="number" min="1" max="99" step="1"></label><span id="device-count"></span><button data-action="devices" class="secondary">保存设备上限</button></section>
+      <section id="portal-password-setting" class="portal-password-setting" hidden><div><h4>设备管理验证码</h4><p id="portal-password-status" role="status">读取中…</p></div><div class="portal-password-form"><label>设置新验证码<input id="portal-new-password" type="password" autocomplete="new-password" minlength="6" maxlength="64" placeholder="6 至 64 个字符"></label><button id="portal-password-visible" class="secondary" type="button" aria-pressed="false">显示</button><button id="portal-password-reset" class="primary" type="button">保存新验证码</button></div><p>现有密码仅保存加盐哈希，无法查看原文。忘记时可直接设置新密码，立即替换旧密码。</p></section>
       <div id="device-list"></div>
       <section id="detail-bind-settings" class="detail-setting"><div><h4>用户解绑次数</h4><p id="detail-binds-used">已使用 0 次</p></div><label class="check-label"><input id="detail-unlimited-binds" type="checkbox"><span>不限次数</span></label><label>允许解绑次数<input id="detail-max-binds" type="number" min="0" max="99" step="1"></label><button data-action="binds" class="secondary">保存解绑次数</button><button data-action="reset" class="secondary">重置已用次数</button></section>
       <div class="detail-actions">

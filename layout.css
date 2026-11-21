@@ -105,3 +105,9 @@ main[data-view=issue] .result{margin-top:14px;padding-top:12px}
   .card-dialog .detail-actions{grid-template-columns:1fr}
   .card-dialog .detail-actions>button,.card-dialog .more-actions summary{width:100%}
 }
+
+.announcement-image-editor,.portal-password-setting{border:1px solid var(--border,#d7e4e0);border-radius:10px;padding:14px;margin:14px 0;background:var(--panel,#fff)}
+.announcement-image-editor h3,.portal-password-setting h4{margin:0 0 6px}.announcement-image-editor p,.portal-password-setting p{font-size:12px;line-height:1.7;color:var(--muted,#637773);margin:5px 0 10px}
+.announcement-image-layout{display:grid;grid-template-columns:160px minmax(0,1fr);gap:18px}.announcement-image-preview{aspect-ratio:342/460;border-radius:8px;border:1px solid var(--border,#d7e4e0);overflow:hidden;background:repeating-conic-gradient(#e5ebe9 0% 25%,#f7faf9 0% 50%) 50%/16px 16px}.announcement-image-preview img{width:100%;height:100%;object-fit:fill;display:block}.announcement-image-preview img[hidden]{display:none}.announcement-image-actions{display:flex;flex-direction:column;gap:10px;align-items:stretch;min-width:0}.announcement-image-actions span{font-size:12px;overflow-wrap:anywhere;line-height:1.7}.announcement-image-actions progress{width:100%;accent-color:var(--accent,#14a08d)}
+.portal-password-form{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:end;gap:8px}.portal-password-form button{height:40px;white-space:nowrap}
+@media(max-width:600px){.announcement-image-layout{grid-template-columns:1fr}.announcement-image-preview{width:160px;justify-self:center}.portal-password-form{grid-template-columns:minmax(0,1fr) auto}.portal-password-form button:last-child{grid-column:1/-1}}

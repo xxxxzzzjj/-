@@ -84,6 +84,7 @@ async function loadNotice() {
   $('notice-size').value = Number(notice.fontSize) >= 10 && Number(notice.fontSize) <= 28 ? Number(notice.fontSize) : 12
   $('notice-bold').checked = notice.bold === true
   updateNoticePreview()
+  showNoticeImage(notice.imageUrl || '')
   noticeStatus('已读取云端公告。')
 }
 $('notice-load').addEventListener('click', async () => { try { await loadNotice() } catch (error) { handleError(error); noticeStatus($('status').textContent, true) } })
@@ -173,7 +174,7 @@ function render() {
     cell(tr, isTrial(row) ? '每台电脑体验一次' : isMulti(row) ? (row.maxDevices == null ? '多设备不限' : `${(row.boundMachines || []).length} / ${row.maxDevices} 台`) : row.boundMachine ? row.boundMachine.slice(0, 12) + '…' : '未绑定').dataset.label = '绑定状态'
     cell(tr, isTrial(row) ? '不重置体验' : `${row.bindCount ?? 0} / ${Number(row.maxBinds) === -1 ? '不限' : row.maxBinds ?? 1}`).dataset.label = '已用 / 允许解绑'; cell(tr, isTrial(row) ? `每机 ${row.trialDays || '?'} 天` : dateText(row.expiresUtc)).dataset.label = '到期时间'
     const last = document.createElement('td'), badge = document.createElement('span'); last.dataset.label = '状态'; badge.className = `badge ${cardState(row)}`; badge.textContent = stateText(row); last.append(badge); tr.append(last)
-    tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-label', `管理 ${row.note || row._id}`); const open = () => { if (state.saving) return; state.selected = row; $('logs').hidden = true; render(); if (!$('detail').open) $('detail').showModal() }; tr.addEventListener('click', open); tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() } }); body.append(tr)
+    tr.tabIndex = 0; tr.setAttribute('role', 'button'); tr.setAttribute('aria-label', `管理 ${row.note || row._id}`); const open = () => { if (state.saving) return; state.selected = row; $('logs').hidden = true; render(); if (!$('detail').open) $('detail').showModal(); loadPortalPassword() }; tr.addEventListener('click', open); tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open() } }); body.append(tr)
   }
   const row = state.selected
   if (!row && $('detail').open) $('detail').close()
@@ -184,6 +185,7 @@ function render() {
   if (row) {
     const trial = isTrial(row), multi = isMulti(row), devices = Array.isArray(row.boundMachines) ? row.boundMachines : []
     $('detail-id').textContent = row._id; $('detail-machine').textContent = multi ? (row.maxDevices == null ? '旧版不限设备' : `已绑定 ${devices.length} 台`) : row.boundMachine || '未绑定'; $('detail-signed-expiry').textContent = dateText(row.sigExpiresUtc); $('detail-max-binds').value = Number(row.maxBinds) === -1 ? 1 : row.maxBinds ?? 1; $('detail-unlimited-binds').checked = Number(row.maxBinds) === -1; $('detail-max-binds').disabled = Number(row.maxBinds) === -1; $('detail-binds-used').textContent = `已使用 ${row.bindCount ?? 0} 次`
+    $('portal-password-setting').hidden = !multi || trial; $('portal-new-password').value = ''; $('portal-new-password').type = 'password'; $('portal-password-visible').textContent = '显示'
     $('detail-note').value = row.note || ''; $('detail-display-title').value = row.displayTitle || ''
     $('trial-help').hidden = !trial; $('detail-bind-settings').hidden = trial; $('device-settings').hidden = !multi || trial; $('detail-max-devices').value = row.maxDevices ?? 2; $('device-count').textContent = row.maxDevices == null ? '当前不限台数' : `已绑定 ${devices.length} 台`; $('device-list').replaceChildren()
     $('detail-signed-expiry').previousElementSibling.textContent = trial ? '体验期限' : '签名到期'
@@ -372,4 +374,85 @@ $('update-save').addEventListener('click', async () => {
     if (pageUrl.protocol !== 'https:') throw Error('更新页面必须使用 HTTPS')
     await api('admin.update.set', { releaseHour, pageUrl: pageUrl.href, current: readUpdateMessage('current'), available: readUpdateMessage('available') }); $('update-hour').value = releaseHour + ':00'; updateAdminStatus('更新设置已保存。客户端按北京时间的年月日和小时比较版本。')
   } catch (error) { handleError(error); updateAdminStatus($('status').textContent, true) } finally { button.disabled = false }
+})
+
+
+let portalPasswordLoading = false
+async function loadPortalPassword() {
+  const row = state.selected
+  if (!row || !isMulti(row) || isTrial(row)) return
+  $('portal-password-status').textContent = '读取中…'
+  try {
+    const result = await api('admin.portal.password.get', { keyId: row._id })
+    if (state.selected?._id !== row._id) return
+    const setting = result.password || {}
+    $('portal-password-status').textContent = setting.isSet ? `已设置 · 最近修改 ${dateText(setting.changedAtUtc)}` : '用户尚未设置，可直接为用户设置验证码'
+  } catch (error) { if (state.selected?._id === row._id) $('portal-password-status').textContent = error.message }
+}
+$('portal-password-visible').addEventListener('click', () => {
+  const show = $('portal-new-password').type === 'password'
+  $('portal-new-password').type = show ? 'text' : 'password'
+  $('portal-password-visible').textContent = show ? '隐藏' : '显示'
+  $('portal-password-visible').setAttribute('aria-pressed', String(show))
+})
+$('portal-password-reset').addEventListener('click', async () => {
+  const row = state.selected, input = $('portal-new-password'), button = $('portal-password-reset')
+  if (!row || portalPasswordLoading) return
+  if (input.value.length < 6 || input.value.length > 64) { $('portal-password-status').textContent = '请输入 6 至 64 个字符'; input.focus(); return }
+  portalPasswordLoading = true; button.disabled = true; button.textContent = '保存中…'
+  try {
+    await api('admin.portal.password.reset', { keyId: row._id, newPassword: input.value })
+    input.value = ''; input.type = 'password'; $('portal-password-visible').textContent = '显示'
+    if (state.selected?._id === row._id) $('portal-password-status').textContent = '新验证码已保存，旧验证码立即失效'
+  } catch (error) { $('portal-password-status').textContent = error.message }
+  finally { portalPasswordLoading = false; button.disabled = false; button.textContent = '保存新验证码' }
+})
+
+let selectedNoticeImage = null, noticeImageObjectUrl = '', noticeImageBusy = false
+function showNoticeImage(url) { const image = $('notice-image-preview'); image.hidden = !url; if (url) image.src = url; else image.removeAttribute('src') }
+$('notice-image-file').addEventListener('change', async event => {
+  let file = event.target.files[0]; if (!file) return
+  try {
+    const image = await createImageBitmap(file)
+    if (file.type === 'image/webp') {
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height; canvas.getContext('2d').drawImage(image, 0, 0)
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'))
+      if (!blob) throw Error('图片转换失败，请选择 PNG 图片')
+      file = new File([blob], file.name.replace(/\.webp$/i, '') + '.png', { type: 'image/png' })
+    }
+    image.close(); selectedNoticeImage = file
+    if (noticeImageObjectUrl) URL.revokeObjectURL(noticeImageObjectUrl)
+    noticeImageObjectUrl = URL.createObjectURL(file); showNoticeImage(noticeImageObjectUrl)
+    $('notice-image-name').textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`
+    $('notice-image-upload').disabled = false; $('notice-image-status').textContent = '预览就绪，点击「上传并发布图片」同步给用户'
+  } catch (_) { selectedNoticeImage = null; $('notice-image-upload').disabled = true; $('notice-image-status').textContent = '无法读取这张图片，请选择有效的 PNG、JPG、WebP、GIF 或 BMP 图片' }
+})
+function directImageUpload(upload, file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest(), form = new FormData()
+    form.append('Signature', upload.authorization); form.append('x-cos-security-token', upload.token); form.append('x-cos-meta-fileid', upload.cosFileId); form.append('key', upload.cloudPath); form.append('file', file)
+    xhr.open('POST', upload.url)
+    xhr.upload.onprogress = event => { if (event.lengthComputable) { const percent = Math.floor(event.loaded * 100 / event.total); $('notice-image-progress').value = percent; $('notice-image-status').textContent = `正在上传 ${percent}%` } }
+    xhr.onload = () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(Error(`云存储上传失败（${xhr.status}），请检查存储跨域和目录权限`))
+    xhr.onerror = () => reject(Error('云存储连接失败，请检查网络和存储跨域设置')); xhr.send(form)
+  })
+}
+$('notice-image-upload').addEventListener('click', async () => {
+  if (!selectedNoticeImage || noticeImageBusy) return
+  noticeImageBusy = true; $('notice-image-upload').disabled = $('notice-image-remove').disabled = true; $('notice-image-progress').hidden = false; $('notice-image-progress').value = 0
+  try {
+    const file = selectedNoticeImage
+    const result = await api('admin.notice.image.begin', { contentType: file.type || ({png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',bmp:'image/bmp'}[file.name.split('.').pop().toLowerCase()]) })
+    await directImageUpload(result.upload, file)
+    const published = await api('admin.notice.image.commit', { receipt: result.upload.receipt })
+    $('notice-image-status').textContent = '图片已发布。插件打开公告时使用缓存，可点击「刷新公告」立即同步。'; showNoticeImage(published.image.url)
+  } catch (error) { $('notice-image-status').textContent = error.message }
+  finally { noticeImageBusy = false; $('notice-image-upload').disabled = !selectedNoticeImage; $('notice-image-remove').disabled = false; $('notice-image-progress').hidden = true }
+})
+$('notice-image-remove').addEventListener('click', async () => {
+  if (noticeImageBusy || !confirm('移除统一公告图片？用户下次刷新公告后不再显示该图片。')) return
+  noticeImageBusy = true; $('notice-image-remove').disabled = true
+  try { await api('admin.notice.image.remove'); showNoticeImage(''); $('notice-image-status').textContent = '云端图片已移除' }
+  catch (error) { $('notice-image-status').textContent = error.message }
+  finally { noticeImageBusy = false; $('notice-image-remove').disabled = false }
 })
